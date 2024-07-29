@@ -12,7 +12,7 @@ const TransactionsPage = () => {
     pricePerShare: '',
     numberOfShares: '',
     transactionDate: '',
-    brokerFee: ''
+    brokerFee: 0 // Default value set to 0
   });
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
@@ -28,6 +28,7 @@ const TransactionsPage = () => {
       const response = await axios.get('/api/transactions');
       setTransactions(response.data);
     } catch (error) {
+      console.error('Failed to fetch transactions:', error);
       setServerError('Failed to fetch transactions');
     }
   };
@@ -50,11 +51,14 @@ const TransactionsPage = () => {
 
     try {
       if (isEditing) {
+        console.log('Form data:', form); 
         await axios.put(`/api/transactions/${editTransactionId}`, form);
         setIsEditing(false);
         setEditTransactionId(null);
+        
       } else {
-        await axios.post('/api/transactions', form);
+        await axios.post('/api/transactions', { ...form, brokerFee: form.brokerFee || 0 }); 
+        console.log('Added transaction:', form);
       }
       fetchTransactions();
       setForm({
@@ -63,19 +67,28 @@ const TransactionsPage = () => {
         pricePerShare: '',
         numberOfShares: '',
         transactionDate: '',
-        brokerFee: ''
+        brokerFee: 0 // Reset default value
       });
       setErrors({});
       setServerError(''); // Clear any previous server error
     } catch (error) {
+      console.error(isEditing ? 'Failed to update transaction' : 'Failed to add transaction:', error);
       setServerError(isEditing ? 'Failed to update transaction' : 'Failed to add transaction');
     }
   };
 
   const handleEditTransaction = (transaction) => {
-    setForm(transaction);
+    setForm({
+      stockSymbol: transaction.stockSymbol,
+      transactionType: transaction.transactionType,
+      pricePerShare: transaction.pricePerShare,
+      numberOfShares: transaction.numberOfShares,
+      transactionDate: transaction.transactionDate,
+      brokerFee: transaction.brokerFee || 0 // Default value to 0 if brokerFee is not provided
+    });
     setIsEditing(true);
     setEditTransactionId(transaction.id);
+    console.log('editTransactionId set to:', transaction.id);
   };
 
   const handleDeleteTransaction = async (id) => {
@@ -83,6 +96,7 @@ const TransactionsPage = () => {
       await axios.delete(`/api/transactions/${id}`);
       fetchTransactions();
     } catch (error) {
+      console.error('Failed to delete transaction:', error);
       setServerError('Failed to delete transaction');
     }
   };
@@ -121,13 +135,16 @@ const TransactionsPage = () => {
             {errors.stockSymbol && <p className="error">{errors.stockSymbol}</p>}
           </div>
           <div className="form-group">
-            <input
-              type="text"
-              placeholder="Transaction Type"
+            <select
+              className="form-control"
               value={form.transactionType}
               onChange={(e) => setForm({ ...form, transactionType: e.target.value })}
               required
-            />
+            >
+              <option value="">Select Transaction Type</option>
+              <option value="Buy">Buy</option>
+              <option value="Sell">Sell</option>
+            </select>
             {errors.transactionType && <p className="error">{errors.transactionType}</p>}
           </div>
           <div className="form-group">
