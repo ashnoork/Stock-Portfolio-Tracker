@@ -3,7 +3,7 @@ body, html {
   height: 100%;
   margin: 0;
   font-family: Arial, sans-serif;
-  /*background: linear-gradient(135deg, #6b73ff, #000dff);*/
+  
 }
 
 .login-page {
@@ -12,6 +12,7 @@ body, html {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  background: linear-gradient(135deg, #6b73ff, #000dff);
 }
 
 .login-box {
