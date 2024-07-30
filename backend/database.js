@@ -12,6 +12,17 @@ const pool = mysql.createPool({
 }).promise(); // allows us to use the promsie API version of mySQL instead of using callback functions
 
 // USER FUNCTIONS
+
+export const getUser = async (email) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM Users WHERE email = ?', [email]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error fetching user from the database:', error);
+    throw new Error('Error fetching user from the database');
+  }
+};
+
 export const addUser = async (user) => {
   const { name, email, password } = user;
   const saltRounds = 10;

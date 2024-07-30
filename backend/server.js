@@ -6,14 +6,18 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { addUser, getHoldings, addHolding, deleteHolding, getTransactions, addTransaction, deleteTransaction, updateTransaction } from './database.js';
+import { getUser, addUser, getHoldings, addHolding, deleteHolding, getTransactions, addTransaction, deleteTransaction, updateTransaction } from './database.js';
 
 dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ["POST, GET"],
+  credentials: true,
+}));
 
 app.get('/api/transactions', async (req, res) => {
   try {
@@ -92,12 +96,6 @@ app.delete('/api/holdings/:id', async (req, res) => {
   }
 });
 
-
-const port = process.env.PORT || 5002;
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
-
 // SIGNUP ENDPOINT
 
 app.post('/api/signup', async (req, res) => {
@@ -111,4 +109,39 @@ app.post('/api/signup', async (req, res) => {
   } catch (error) {
       return res.json({ Errors: error.message });
   }
+});
+
+// LOGIN ENDPOINT
+
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  console.log('Request Body:', req.body);
+  try {
+    const user = await getUser(email);
+   
+    if (!user) {
+      return res.status(400).json({ Errors: 'No email address existed' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    console.log('isMatch:', isMatch);
+    if (!isMatch) {
+      return res.status(400).json({ Errors: 'Invalid email or password' });
+    }
+
+    const token = jwt.sign({ userId: user.user_id, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: '1d',
+    });
+
+    res.cookie('token', token);
+    return res.json({ Status: 'Success', token });
+  } catch (error) {
+    console.error('Error during login:', error);
+    return res.status(500).json({ Errors: error.message });
+  }
+});
+
+const port = process.env.PORT || 5002;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
