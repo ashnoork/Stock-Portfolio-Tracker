@@ -2,28 +2,42 @@
 CREATE DATABASE IF NOT EXISTS stockPortfolio;
 USE stockPortfolio;
 
+-- Users Table
+CREATE TABLE IF NOT EXISTS Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Current Share Holdings Table
 CREATE TABLE IF NOT EXISTS Holdings (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    stockSymbol VARCHAR(10) NOT NULL UNIQUE,
+    user_id INT NOT NULL,
+    stockSymbol VARCHAR(10) NOT NULL,
     companyName VARCHAR(255) NOT NULL,
     sharesOwned INT NOT NULL,
     priceBoughtAt DECIMAL(10, 2) NOT NULL,
     currentPrice DECIMAL(10, 2) NOT NULL,
     totalValue DECIMAL(10, 2) AS (sharesOwned * currentPrice) STORED,
     gain DECIMAL(10, 2) AS ((currentPrice - priceBoughtAt) * sharesOwned) STORED,
-    purchaseDate DATE NOT NULL
+    purchaseDate DATE NOT NULL,
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    UNIQUE (user_id, stockSymbol) 
 );
 
 -- Transactions Table
 CREATE TABLE IF NOT EXISTS Transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
     stockSymbol VARCHAR(10) NOT NULL,
     transactionType ENUM('Buy', 'Sell') NOT NULL,
     pricePerShare DECIMAL(10, 2) NOT NULL,
     numberOfShares INT NOT NULL,
     transactionDate DATE NOT NULL,
     brokerFee DECIMAL(10, 2) DEFAULT 0,
+    CONSTRAINT fk_user_id_transactions FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
     CONSTRAINT fk_stockSymbol FOREIGN KEY (stockSymbol) REFERENCES Holdings(stockSymbol)
 );
 

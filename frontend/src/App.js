@@ -5,6 +5,7 @@ import Menu from './components/menu';
 import LoginPage from './components/login';
 import SignUpPage from './components/signup';
 import TransactionsPage from './components/transactionPage';
+import HoldingsPage from './components/holdingsPage';
 import './App.css';
 
 const App = () => {
@@ -29,6 +30,8 @@ const App = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/overview" element={<HoldingsPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
           </Routes>
         </main>
       </div>

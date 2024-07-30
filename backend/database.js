@@ -1,6 +1,7 @@
 import mysql from 'mysql2';
-
+import bcrypt from 'bcrypt';
 import dotenv from 'dotenv'
+import { hash } from 'crypto';
 dotenv.config();
 
 const pool = mysql.createPool({
@@ -10,6 +11,24 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE
 }).promise(); // allows us to use the promsie API version of mySQL instead of using callback functions
 
+// USER FUNCTIONS
+export const addUser = async (user) => {
+  const { name, email, password } = user;
+  const saltRounds = 10;
+
+  try {
+    console.log('Hashing password', password);
+    const hash = await bcrypt.hash(password, saltRounds);
+    const [result] = await pool.query(
+      'INSERT INTO Users (username, email, password_hash) VALUES (?, ?, ?)',
+      [name, email, hash]
+    );
+    return result.insertId;
+  } catch (error) {
+    console.error('Error inserting user into the database:', error);
+    throw new Error('Error inserting user into the database');
+  }
+};
 
 export const getTransactions = async () => {
     const [rows] = await pool.query('SELECT * FROM Transactions');
@@ -41,5 +60,25 @@ export const updateTransaction = async (id, updatedTransaction) => {
         throw new Error('Transaction not found');
     }
 };
+
+// HOLDINGS FUNCTIONS
+export const getHoldings = async () => {
+    const [rows] = await pool.query('SELECT * FROM Holdings');
+    return rows;
+  };
+  
+  export const addHolding = async (holding) => {
+    const { stockSymbol, companyName, sharesOwned, priceBoughtAt, currentPrice, purchaseDate } = holding;
+    const [result] = await pool.query(
+      'INSERT INTO Holdings (stockSymbol, companyName, sharesOwned, priceBoughtAt, currentPrice, purchaseDate) VALUES (?, ?, ?, ?, ?, ?)',
+      [stockSymbol, companyName, sharesOwned, priceBoughtAt, currentPrice, purchaseDate]
+    );
+    return result.insertId;
+  };
+  
+  export const deleteHolding = async (id) => {
+    await pool.query('DELETE FROM Holdings WHERE id = ?', [id]);
+  };
+
 
 export default pool;
